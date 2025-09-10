@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Milk Splash Tracker</title>
 <style>
-  body { margin:0; overflow:hidden; background:black; font-family:'Segoe UI',sans-serif; color:white; }
+  body { margin:0; overflow:hidden; background:black; font-family:'Segoe UI',sans-serif; color:white; position:relative; }
 
-  #topMM, #tokenData, #socialLink a, #centerGif, #centerHand { position:absolute; }
-  #topMM { font-weight:bold; color:#ffdd00; text-shadow:0 0 15px rgba(255,221,0,0.9),0 0 25px rgba(255,221,0,0.7); z-index:4; text-align:left; }
-  #tokenData { z-index:4; text-align:left; line-height:1.4em; }
+  #topMM, #tokenData, #centerGif, #centerHand, #socialLink { position:absolute; z-index:4; }
+
+  #topMM { font-weight:bold; color:#ffdd00; text-shadow:0 0 15px rgba(255,221,0,0.9),0 0 25px rgba(255,221,0,0.7); }
+  #tokenData { line-height:1.4em; }
   #priceMcap { font-weight:bold; text-shadow:0 0 8px rgba(255,255,255,0.7); }
   #change { font-weight:bold; text-shadow:0 0 15px rgba(0,255,0,0.9); }
   .positive { color:#00ff99; text-shadow:0 0 15px rgba(0,255,0,0.9),0 0 25px rgba(0,255,0,0.7); }
@@ -19,7 +20,7 @@
   #socialLink img { width:24px; height:24px; }
   #socialLink span { color:#00bfff; font-weight:bold; }
 
-  #centerGif, #centerHand { z-index:2; }
+  #centerGif, #centerHand { z-index:3; }
   canvas { position:absolute; top:0; left:0; z-index:1; }
 </style>
 </head>
@@ -57,12 +58,12 @@ const topMM = document.getElementById('topMM');
 const tokenData = document.getElementById('tokenData');
 const socialLink = document.getElementById('socialLink');
 
-// --- Adjustable variables for desktop and mobile in px ---
+// --- Adjustable variables ---
 const settings = {
   desktop: {
     topMM: { fontSize: "120px", top: 20, left: 20 },
     tokenData: { fontSize: "18px", top: 90, left: 20 },
-    gif: { width: 350, height: 350, offsetX: -160, offsetY: 90 },
+    gif: { width: 650, height: 650, offsetX: -360, offsetY: 90 },
     hand: { width: 450, height: 450, offsetX: 105, offsetY: -90 },
     socialLink: { bottom: 20, right: 20 }
   },
@@ -79,6 +80,8 @@ function isMobile() { return window.innerWidth <= 768; }
 
 function updatePositions() {
   const s = isMobile() ? settings.mobile : settings.desktop;
+  const centerX = width/2;
+  const centerY = height/2;
 
   // Top MM
   topMM.style.fontSize = s.topMM.fontSize;
@@ -90,36 +93,21 @@ function updatePositions() {
   tokenData.style.top = s.tokenData.top + "px";
   tokenData.style.left = s.tokenData.left + "px";
 
-  const centerX = width / 2;
-  const centerY = height / 2;
-
   // GIF
   gif.style.width = s.gif.width + "px";
   gif.style.height = s.gif.height + "px";
-  if(isMobile()) {
-    // Center on mobile
-    gif.style.left = (centerX - s.gif.width/2) + "px";
-    gif.style.top  = (centerY - s.gif.height/2) + "px";
-  } else {
-    // Desktop with offset
-    gif.style.left = (centerX + s.gif.offsetX - s.gif.width/2) + "px";
-    gif.style.top  = (centerY + s.gif.offsetY - s.gif.height/2) + "px";
-  }
+  gif.style.left = (isMobile() ? centerX - s.gif.width/2 : centerX + s.gif.offsetX - s.gif.width/2) + "px";
+  gif.style.top  = (isMobile() ? centerY - s.gif.height/2 : centerY + s.gif.offsetY - s.gif.height/2) + "px";
 
   // Hand
   hand.style.width = s.hand.width + "px";
   hand.style.height = s.hand.height + "px";
-  if(isMobile()) {
-    hand.style.left = (centerX - s.hand.width/2) + "px";
-    hand.style.top  = (centerY - s.hand.height/2) + "px";
-  } else {
-    hand.style.left = (centerX + s.hand.offsetX - s.hand.width/2) + "px";
-    hand.style.top  = (centerY + s.hand.offsetY - s.hand.height/2) + "px";
-  }
+  hand.style.left = (isMobile() ? centerX - s.hand.width/2 : centerX + s.hand.offsetX - s.hand.width/2) + "px";
+  hand.style.top  = (isMobile() ? centerY - s.hand.height/2 : centerY + s.hand.offsetY - s.hand.height/2) + "px";
 
-  // Social link
-  socialLink.style.bottom = s.socialLink.bottom + "px";
-  socialLink.style.right = s.socialLink.right + "px";
+  // Social link: always bottom-right
+  socialLink.style.left = (width - socialLink.offsetWidth - s.socialLink.right) + "px";
+  socialLink.style.top  = (height - socialLink.offsetHeight - s.socialLink.bottom) + "px";
 }
 
 window.addEventListener('resize', () => {
