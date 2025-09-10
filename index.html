@@ -7,47 +7,19 @@
 <style>
   body { margin:0; overflow:hidden; background:black; font-family:'Segoe UI',sans-serif; color:white; }
 
-  /* Left-aligned with bleeding */
-  #topMM {
-    position:absolute;
-    top:20px;
-    left:0;
-    padding-left:10px;
-    font-size:2.5em;
-    font-weight:bold;
-    color:#ffdd00;
-    text-shadow:0 0 15px rgba(255,221,0,0.9),0 0 25px rgba(255,221,0,0.7);
-    z-index:4;
-    text-align:left;
-  }
-
-  #tokenData {
-    position:absolute;
-    top:90px;
-    left:0;
-    padding-left:10px;
-    z-index:3;
-    font-size:1.2em;
-    line-height:1.4em;
-    text-align:left;
-  }
-
-  #priceMcap { display:block; margin-bottom:10px; font-size:1.2em; font-weight:bold; text-shadow:0 0 8px rgba(255,255,255,0.7); }
-  #change { font-weight:bold; font-size:1.5em; margin-top:5px; text-shadow:0 0 15px rgba(0,255,0,0.9); }
+  #topMM, #tokenData, #socialLink a, #centerGif, #centerHand { position:absolute; }
+  #topMM { font-weight:bold; color:#ffdd00; text-shadow:0 0 15px rgba(255,221,0,0.9),0 0 25px rgba(255,221,0,0.7); z-index:4; text-align:left; }
+  #tokenData { z-index:4; text-align:left; line-height:1.4em; }
+  #priceMcap { font-weight:bold; text-shadow:0 0 8px rgba(255,255,255,0.7); }
+  #change { font-weight:bold; text-shadow:0 0 15px rgba(0,255,0,0.9); }
   .positive { color:#00ff99; text-shadow:0 0 15px rgba(0,255,0,0.9),0 0 25px rgba(0,255,0,0.7); }
   .negative { color:#ff3300; text-shadow:0 0 15px rgba(255,0,0,0.9),0 0 25px rgba(255,0,0,0.7); }
 
-  #socialLink {
-    margin-top:10px;
-    text-align:left;
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    font-size:1em;
-  }
+  #socialLink a { text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+  #socialLink img { width:24px; height:24px; }
+  #socialLink span { color:#00bfff; font-weight:bold; }
 
-  #centerGif { position:absolute; z-index:2; }
-  #centerHand { position:absolute; z-index:3; }
+  #centerGif, #centerHand { z-index:2; }
   canvas { position:absolute; top:0; left:0; z-index:1; }
 </style>
 </head>
@@ -60,13 +32,13 @@
     <span id="priceNum">$0.00</span> | <span id="mcap">MCAP: 0</span>
   </div>
   <div id="change" class="change">0%</div>
+</div>
 
-  <div id="socialLink">
-    <a href="https://x.com/MilkMoneyBot" target="_blank" style="text-decoration:none; color:white; font-weight:bold; display:inline-flex; align-items:center; gap:6px;">
-      <img src="https://i.postimg.cc/ncpwFVXC/XICON2.png" alt="MilkMoneyBot" style="width:24px; height:24px;">
-      @MilkMoneyBot
-    </a>
-  </div>
+<div id="socialLink">
+  <a href="https://x.com/MilkMoneyBot" target="_blank">
+    <img src="https://i.postimg.cc/ncpwFVXC/XICON2.png" alt="MilkMoneyBot">
+    <span>@MilkMoneyBot</span>
+  </a>
 </div>
 
 <img id="centerGif" src="https://i.postimg.cc/BQ4WhKVw/1446021-6b950.gif" alt="GIF">
@@ -81,36 +53,56 @@ let height = canvas.height = window.innerHeight;
 
 const gif = document.getElementById('centerGif');
 const hand = document.getElementById('centerHand');
+const topMM = document.getElementById('topMM');
+const tokenData = document.getElementById('tokenData');
+const socialLink = document.getElementById('socialLink');
 
-// --- Adjustable variables ---
-let gifWidth = 350;
-let gifHeight = 350;
-let gifOffsetX = -160;   // move GIF to left
-let gifOffsetY = 90;     // move GIF lower
+// --- Adjustable variables for desktop and mobile in px ---
+const settings = {
+  desktop: {
+    topMM: { fontSize: "80px", top: 20, left: 20 },
+    tokenData: { fontSize: "18px", top: 90, left: 20 },
+    gif: { width: 350, height: 350, offsetX: -160, offsetY: 90 },
+    hand: { width: 450, height: 450, offsetX: 105, offsetY: -90 },
+    socialLink: { bottom: 20, right: 20 }
+  },
+  mobile: {
+    topMM: { fontSize: "28px", top: 10, left: 10 },
+    tokenData: { fontSize: "16px", top: 60, left: 10 },
+    gif: { width: 200, height: 200, offsetX: -100, offsetY: 50 },
+    hand: { width: 250, height: 250, offsetX: 50, offsetY: -50 },
+    socialLink: { bottom: 10, right: 10 }
+  }
+};
 
-let handWidth = 450;
-let handHeight = 450;
-let handOffsetX = 105;   // horizontal offset from GIF center
-let handOffsetY = -90;     // vertical offset from GIF center
-
-let centerX = width / 2;
-let centerY = height * 0.68;
+function isMobile() { return window.innerWidth <= 768; }
 
 function updatePositions() {
-  centerX = width / 2;
-  centerY = height * 0.68;
+  const s = isMobile() ? settings.mobile : settings.desktop;
 
-  // GIF position
-  gif.style.width = gifWidth + "px";
-  gif.style.height = gifHeight + "px";
-  gif.style.left = (centerX + gifOffsetX - gifWidth/2) + "px";
-  gif.style.top  = (centerY + gifOffsetY - gifHeight/2) + "px";
+  topMM.style.fontSize = s.topMM.fontSize;
+  topMM.style.top = s.topMM.top + "px";
+  topMM.style.left = s.topMM.left + "px";
 
-  // Hand position
-  hand.style.width = handWidth + "px";
-  hand.style.height = handHeight + "px";
-  hand.style.left = (centerX + handOffsetX - handWidth/2) + "px";
-  hand.style.top  = (centerY + handOffsetY - handHeight/2) + "px";
+  tokenData.style.fontSize = s.tokenData.fontSize;
+  tokenData.style.top = s.tokenData.top + "px";
+  tokenData.style.left = s.tokenData.left + "px";
+
+  const centerX = width/2;
+  const centerY = height*0.68;
+
+  gif.style.width = s.gif.width + "px";
+  gif.style.height = s.gif.height + "px";
+  gif.style.left = (centerX + s.gif.offsetX - s.gif.width/2) + "px";
+  gif.style.top  = (centerY + s.gif.offsetY - s.gif.height/2) + "px";
+
+  hand.style.width = s.hand.width + "px";
+  hand.style.height = s.hand.height + "px";
+  hand.style.left = (centerX + s.hand.offsetX - s.hand.width/2) + "px";
+  hand.style.top  = (centerY + s.hand.offsetY - s.hand.height/2) + "px";
+
+  socialLink.style.bottom = s.socialLink.bottom + "px";
+  socialLink.style.right = s.socialLink.right + "px";
 }
 
 window.addEventListener('resize', () => {
@@ -120,108 +112,69 @@ window.addEventListener('resize', () => {
 });
 updatePositions();
 
-// --- Milk Splash Particle ---
+// --- Particle system ---
 class Particle {
   constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 2;
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed;
-    this.size = Math.random() * 3 + 1;
-    this.alpha = 1;
-    this.decay = Math.random() * 0.01 + 0.005;
+    this.x = x; this.y = y;
+    const angle=Math.random()*2*Math.PI, speed=Math.random()*2;
+    this.vx=Math.cos(angle)*speed; this.vy=Math.sin(angle)*speed;
+    this.size=Math.random()*3+1; this.alpha=1; this.decay=Math.random()*0.01 + 0.005;
   }
-  update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
-  draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
+  update(){ this.x+=this.vx; this.y+=this.vy; this.alpha-=this.decay; }
+  draw(){ ctx.globalAlpha=this.alpha; ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); }
 }
-const particles = [];
+const particles=[];
 
-// --- Background Particles ---
 class BackgroundParticle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.size = Math.random()*2 + 1;
-    this.alpha = Math.random()*0.3 + 0.1;
-    this.vx = (Math.random()-0.5)*0.2;
-    this.vy = (Math.random()-0.5)*0.2;
+  constructor(){ this.reset(); }
+  reset(){
+    this.x=Math.random()*width; this.y=Math.random()*height;
+    this.size=Math.random()*2+1; this.alpha=Math.random()*0.3+0.1;
+    this.vx=(Math.random()-0.5)*0.2; this.vy=(Math.random()-0.5)*0.2;
   }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    if(this.x<0||this.x>width||this.y<0||this.y>height) this.reset();
-  }
-  draw() {
-    ctx.globalAlpha = this.alpha;
-    ctx.fillStyle = '#888';
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
-    ctx.fill();
-  }
+  update(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>width||this.y<0||this.y>height)this.reset(); }
+  draw(){ ctx.globalAlpha=this.alpha; ctx.fillStyle='#888'; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); }
 }
-const bgParticles = [];
-for(let i=0;i<200;i++) bgParticles.push(new BackgroundParticle());
+const bgParticles=[]; for(let i=0;i<200;i++) bgParticles.push(new BackgroundParticle());
 
-// --- Animate ---
-function animate() {
+function animate(){
   const gradient = ctx.createLinearGradient(0,0,0,height);
-  gradient.addColorStop(0,'#222');
-  gradient.addColorStop(1,'#000');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0,0,width,height);
+  gradient.addColorStop(0,'#222'); gradient.addColorStop(1,'#000');
+  ctx.fillStyle=gradient; ctx.fillRect(0,0,width,height);
 
   bgParticles.forEach(p=>{p.update();p.draw();});
 
-  for(let i=0;i<5;i++){ // continuous splash at GIF center
-    particles.push(new Particle(centerX + gifOffsetX, centerY + gifOffsetY));
-  }
+  const s = isMobile() ? settings.mobile : settings.desktop;
+  for(let i=0;i<5;i++) particles.push(new Particle(width/2 + s.gif.offsetX, height*0.68 + s.gif.offsetY));
 
-  particles.forEach((p,i)=>{
-    p.update(); p.draw();
-    if(p.alpha<=0) particles.splice(i,1);
-  });
-
+  particles.forEach((p,i)=>{p.update();p.draw();if(p.alpha<=0)particles.splice(i,1);});
   requestAnimationFrame(animate);
 }
 animate();
 
-// Click for extra splash
-canvas.addEventListener('click', e=>{
-  for(let i=0;i<50;i++){
-    particles.push(new Particle(e.clientX,e.clientY));
-  }
-});
+canvas.addEventListener('click', e=>{ for(let i=0;i<50;i++) particles.push(new Particle(e.clientX,e.clientY)); });
 
-// Fetch token data
+// --- Token data fetch ---
 const pairId="BFQZ6WUR6hpXg6j1fSAcCgJAnmdgCyT6Q71ghz54QoAk";
 const supply = 999988598;
 const priceEl = document.getElementById('priceNum');
 const mcapEl = document.getElementById('mcap');
 const changeEl = document.getElementById('change');
 
-async function fetchData() {
-  try {
+async function fetchData(){
+  try{
     const res = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${pairId}`);
     const json = await res.json();
     if(!json.pair) return;
     const priceNum = Number(json.pair.priceUsd);
-    const price = priceNum.toFixed(6);
-    const mcap = (priceNum*supply).toLocaleString(undefined,{maximumFractionDigits:0});
+    priceEl.textContent = `$${priceNum.toFixed(6)}`;
+    mcapEl.textContent = `MCAP: ${(priceNum*supply).toLocaleString(undefined,{maximumFractionDigits:0})}`;
     const changeNum = Number(json.pair.priceChange.h24).toFixed(2);
-    const change = (changeNum>=0?'+':'')+changeNum;
-
-    priceEl.textContent = `$${price}`;
-    mcapEl.textContent = `MCAP: ${mcap}`;
-    changeEl.textContent = `${change}%`;
-    changeEl.className = `change ${changeNum>=0?'positive':'negative'}`;
-  } catch(e){ console.error(e); }
+    changeEl.textContent = `${(changeNum>=0?'+':'')+changeNum}%`;
+    changeEl.className=`change ${changeNum>=0?'positive':'negative'}`;
+  }catch(e){ console.error(e); }
 }
-fetchData();
-setInterval(fetchData,10000);
+fetchData(); setInterval(fetchData,10000);
 </script>
 </body>
 </html>
-
