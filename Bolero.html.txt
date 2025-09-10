@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milk Splash Tracker</title>
+<style>
+  body { margin:0; overflow:hidden; background:black; font-family:'Segoe UI',sans-serif; color:white; }
+
+  /* Left-aligned with bleeding */
+  #topMM {
+    position:absolute;
+    top:20px;
+    left:0;
+    padding-left:10px;
+    font-size:2.5em;
+    font-weight:bold;
+    color:#ffdd00;
+    text-shadow:0 0 15px rgba(255,221,0,0.9),0 0 25px rgba(255,221,0,0.7);
+    z-index:4;
+    text-align:left;
+  }
+
+  #tokenData {
+    position:absolute;
+    top:90px;
+    left:0;
+    padding-left:10px;
+    z-index:3;
+    font-size:1.2em;
+    line-height:1.4em;
+    text-align:left;
+  }
+
+  #priceMcap { display:block; margin-bottom:10px; font-size:1.2em; font-weight:bold; text-shadow:0 0 8px rgba(255,255,255,0.7); }
+  #change { font-weight:bold; font-size:1.5em; margin-top:5px; text-shadow:0 0 15px rgba(0,255,0,0.9); }
+  .positive { color:#00ff99; text-shadow:0 0 15px rgba(0,255,0,0.9),0 0 25px rgba(0,255,0,0.7); }
+  .negative { color:#ff3300; text-shadow:0 0 15px rgba(255,0,0,0.9),0 0 25px rgba(255,0,0,0.7); }
+
+  #socialLink {
+    margin-top:10px;
+    text-align:left;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:1em;
+  }
+
+  #centerGif { position:absolute; z-index:2; }
+  #centerHand { position:absolute; z-index:3; }
+  canvas { position:absolute; top:0; left:0; z-index:1; }
+</style>
+</head>
+<body>
+
+<div id="topMM">$MM</div>
+
+<div id="tokenData">
+  <div id="priceMcap">
+    <span id="priceNum">$0.00</span> | <span id="mcap">MCAP: 0</span>
+  </div>
+  <div id="change" class="change">0%</div>
+
+  <div id="socialLink">
+    <a href="https://x.com/MilkMoneyBot" target="_blank" style="text-decoration:none; color:white; font-weight:bold; display:inline-flex; align-items:center; gap:6px;">
+      <img src="https://i.postimg.cc/ncpwFVXC/XICON2.png" alt="MilkMoneyBot" style="width:24px; height:24px;">
+      @MilkMoneyBot
+    </a>
+  </div>
+</div>
+
+<img id="centerGif" src="https://i.postimg.cc/BQ4WhKVw/1446021-6b950.gif" alt="GIF">
+<img id="centerHand" src="https://i.postimg.cc/G2Bdv7Qy/solana.png" alt="Hand">
+<canvas id="particleCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+const gif = document.getElementById('centerGif');
+const hand = document.getElementById('centerHand');
+
+// --- Adjustable variables ---
+let gifWidth = 350;
+let gifHeight = 350;
+let gifOffsetX = -160;   // move GIF to left
+let gifOffsetY = 90;     // move GIF lower
+
+let handWidth = 450;
+let handHeight = 450;
+let handOffsetX = 105;   // horizontal offset from GIF center
+let handOffsetY = -90;     // vertical offset from GIF center
+
+let centerX = width / 2;
+let centerY = height * 0.68;
+
+function updatePositions() {
+  centerX = width / 2;
+  centerY = height * 0.68;
+
+  // GIF position
+  gif.style.width = gifWidth + "px";
+  gif.style.height = gifHeight + "px";
+  gif.style.left = (centerX + gifOffsetX - gifWidth/2) + "px";
+  gif.style.top  = (centerY + gifOffsetY - gifHeight/2) + "px";
+
+  // Hand position
+  hand.style.width = handWidth + "px";
+  hand.style.height = handHeight + "px";
+  hand.style.left = (centerX + handOffsetX - handWidth/2) + "px";
+  hand.style.top  = (centerY + handOffsetY - handHeight/2) + "px";
+}
+
+window.addEventListener('resize', () => {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  updatePositions();
+});
+updatePositions();
+
+// --- Milk Splash Particle ---
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    const angle = Math.random() * 2 * Math.PI;
+    const speed = Math.random() * 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.size = Math.random() * 3 + 1;
+    this.alpha = 1;
+    this.decay = Math.random() * 0.01 + 0.005;
+  }
+  update() { this.x += this.vx; this.y += this.vy; this.alpha -= this.decay; }
+  draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
+}
+const particles = [];
+
+// --- Background Particles ---
+class BackgroundParticle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * width;
+    this.y = Math.random() * height;
+    this.size = Math.random()*2 + 1;
+    this.alpha = Math.random()*0.3 + 0.1;
+    this.vx = (Math.random()-0.5)*0.2;
+    this.vy = (Math.random()-0.5)*0.2;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if(this.x<0||this.x>width||this.y<0||this.y>height) this.reset();
+  }
+  draw() {
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = '#888';
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+const bgParticles = [];
+for(let i=0;i<200;i++) bgParticles.push(new BackgroundParticle());
+
+// --- Animate ---
+function animate() {
+  const gradient = ctx.createLinearGradient(0,0,0,height);
+  gradient.addColorStop(0,'#222');
+  gradient.addColorStop(1,'#000');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0,0,width,height);
+
+  bgParticles.forEach(p=>{p.update();p.draw();});
+
+  for(let i=0;i<5;i++){ // continuous splash at GIF center
+    particles.push(new Particle(centerX + gifOffsetX, centerY + gifOffsetY));
+  }
+
+  particles.forEach((p,i)=>{
+    p.update(); p.draw();
+    if(p.alpha<=0) particles.splice(i,1);
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Click for extra splash
+canvas.addEventListener('click', e=>{
+  for(let i=0;i<50;i++){
+    particles.push(new Particle(e.clientX,e.clientY));
+  }
+});
+
+// Fetch token data
+const pairId="BFQZ6WUR6hpXg6j1fSAcCgJAnmdgCyT6Q71ghz54QoAk";
+const supply = 999988598;
+const priceEl = document.getElementById('priceNum');
+const mcapEl = document.getElementById('mcap');
+const changeEl = document.getElementById('change');
+
+async function fetchData() {
+  try {
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${pairId}`);
+    const json = await res.json();
+    if(!json.pair) return;
+    const priceNum = Number(json.pair.priceUsd);
+    const price = priceNum.toFixed(6);
+    const mcap = (priceNum*supply).toLocaleString(undefined,{maximumFractionDigits:0});
+    const changeNum = Number(json.pair.priceChange.h24).toFixed(2);
+    const change = (changeNum>=0?'+':'')+changeNum;
+
+    priceEl.textContent = `$${price}`;
+    mcapEl.textContent = `MCAP: ${mcap}`;
+    changeEl.textContent = `${change}%`;
+    changeEl.className = `change ${changeNum>=0?'positive':'negative'}`;
+  } catch(e){ console.error(e); }
+}
+fetchData();
+setInterval(fetchData,10000);
+</script>
+</body>
+</html>
