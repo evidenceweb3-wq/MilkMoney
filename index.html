@@ -60,7 +60,7 @@ const socialLink = document.getElementById('socialLink');
 // --- Adjustable variables for desktop and mobile in px ---
 const settings = {
   desktop: {
-    topMM: { fontSize: "80px", top: 20, left: 20 },
+    topMM: { fontSize: "120px", top: 20, left: 20 },
     tokenData: { fontSize: "18px", top: 90, left: 20 },
     gif: { width: 350, height: 350, offsetX: -160, offsetY: 90 },
     hand: { width: 450, height: 450, offsetX: 105, offsetY: -90 },
@@ -69,8 +69,8 @@ const settings = {
   mobile: {
     topMM: { fontSize: "28px", top: 10, left: 10 },
     tokenData: { fontSize: "16px", top: 60, left: 10 },
-    gif: { width: 200, height: 200, offsetX: -100, offsetY: 50 },
-    hand: { width: 250, height: 250, offsetX: 50, offsetY: -50 },
+    gif: { width: 200, height: 200 },
+    hand: { width: 250, height: 250 },
     socialLink: { bottom: 10, right: 10 }
   }
 };
@@ -80,27 +80,44 @@ function isMobile() { return window.innerWidth <= 768; }
 function updatePositions() {
   const s = isMobile() ? settings.mobile : settings.desktop;
 
+  // Top MM
   topMM.style.fontSize = s.topMM.fontSize;
   topMM.style.top = s.topMM.top + "px";
   topMM.style.left = s.topMM.left + "px";
 
+  // Token data
   tokenData.style.fontSize = s.tokenData.fontSize;
   tokenData.style.top = s.tokenData.top + "px";
   tokenData.style.left = s.tokenData.left + "px";
 
-  const centerX = width/2;
-  const centerY = height*0.68;
+  const centerX = width / 2;
+  const centerY = height / 2;
 
+  // GIF
   gif.style.width = s.gif.width + "px";
   gif.style.height = s.gif.height + "px";
-  gif.style.left = (centerX + s.gif.offsetX - s.gif.width/2) + "px";
-  gif.style.top  = (centerY + s.gif.offsetY - s.gif.height/2) + "px";
+  if(isMobile()) {
+    // Center on mobile
+    gif.style.left = (centerX - s.gif.width/2) + "px";
+    gif.style.top  = (centerY - s.gif.height/2) + "px";
+  } else {
+    // Desktop with offset
+    gif.style.left = (centerX + s.gif.offsetX - s.gif.width/2) + "px";
+    gif.style.top  = (centerY + s.gif.offsetY - s.gif.height/2) + "px";
+  }
 
+  // Hand
   hand.style.width = s.hand.width + "px";
   hand.style.height = s.hand.height + "px";
-  hand.style.left = (centerX + s.hand.offsetX - s.hand.width/2) + "px";
-  hand.style.top  = (centerY + s.hand.offsetY - s.hand.height/2) + "px";
+  if(isMobile()) {
+    hand.style.left = (centerX - s.hand.width/2) + "px";
+    hand.style.top  = (centerY - s.hand.height/2) + "px";
+  } else {
+    hand.style.left = (centerX + s.hand.offsetX - s.hand.width/2) + "px";
+    hand.style.top  = (centerY + s.hand.offsetY - s.hand.height/2) + "px";
+  }
 
+  // Social link
   socialLink.style.bottom = s.socialLink.bottom + "px";
   socialLink.style.right = s.socialLink.right + "px";
 }
@@ -145,7 +162,9 @@ function animate(){
   bgParticles.forEach(p=>{p.update();p.draw();});
 
   const s = isMobile() ? settings.mobile : settings.desktop;
-  for(let i=0;i<5;i++) particles.push(new Particle(width/2 + s.gif.offsetX, height*0.68 + s.gif.offsetY));
+  const gifX = isMobile() ? width/2 : width/2 + s.gif.offsetX;
+  const gifY = isMobile() ? height/2 : height*0.68 + s.gif.offsetY;
+  for(let i=0;i<5;i++) particles.push(new Particle(gifX, gifY));
 
   particles.forEach((p,i)=>{p.update();p.draw();if(p.alpha<=0)particles.splice(i,1);});
   requestAnimationFrame(animate);
